@@ -7,7 +7,7 @@ struct ContentView: View {
                 .font(.system(size: 60))
                 .foregroundStyle(.indigo)
             
-            Text("Лабораторна робота №1")
+            Text("Практична робота №1")
                 .font(.title2.bold())
             
             Text("Уся робота програми виводиться в консоль Xcode")
