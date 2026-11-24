@@ -3,78 +3,88 @@ import Combine
 
 final class QuotesViewModel: ObservableObject {
 
-    @Published var demoOutput: String =
-        "Натисніть кнопку, щоб запустити MVVM сценарій."
+    @Published private(set) var quotes: [Quote] = []
+    @Published var selectedCategory: QuoteCategory? = nil
 
-    private let storage: any QuoteRepository
+    private let repository: any QuoteRepository
 
-    init(storage: any QuoteRepository) {
-        self.storage = storage
+    init(repository: any QuoteRepository) {
+        self.repository = repository
+        refresh()
+    }
+
+    func refresh() {
+        quotes = repository.quotes
     }
 
     func filterQuotes(using strategy: any FilterStrategy) -> [Quote] {
-        strategy.filter(storage.quotes)
+        strategy.filter(quotes)
     }
 
-    func runDemo() {
-        var log = "СТАРТ СЦЕНАРІЮ\n\n"
-        let quoteText = "Дизайн - це не те, як предмет виглядає, а те, як він працює."
-        let newQuote: Quote
+    var filteredQuotes: [Quote] {
+        if let category = selectedCategory {
+            return filterQuotes(
+                using: CategoryFilterStrategy(category: category)
+            )
+        }
 
-        if let existingQuote = storage.quotes.first(where: {
+        return filterQuotes(using: AllQuotesStrategy())
+    }
+
+    var favoriteQuotes: [Quote] {
+        filterQuotes(using: FavoritesFilterStrategy())
+    }
+
+    func quote(with id: UUID) -> Quote? {
+        quotes.first { $0.id == id }
+    }
+
+    func randomQuote() -> Quote? {
+        quotes.randomElement()
+    }
+
+    @discardableResult
+    func addQuote(
+        text: String,
+        author: String,
+        category: QuoteCategory
+    ) -> Bool {
+
+        let cleanText = text.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+
+        let cleanAuthor = author.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+
+        let isDuplicate = quotes.contains {
             $0.text.trimmingCharacters(in: .whitespacesAndNewlines)
-                .caseInsensitiveCompare(quoteText) == .orderedSame
-        }) {
-            newQuote = existingQuote
-            log += "Цитата вже існує у сховищі. Дублікат не створено.\n"
-        } else {
-            guard let createdQuote = QuoteBuilder()
-                .setText(quoteText)
-                .setAuthor("Стів Джобс")
-                .setCategory(.motivation)
-                .setFavorite(false)
-                .build()
-            else {
-                demoOutput = "Помилка: текст цитати не може бути порожнім."
-                return
-            }
-            storage.add(createdQuote)
-            newQuote = createdQuote
-            log += "Цитату створено через Builder та додано до сховища.\n"
+                .caseInsensitiveCompare(cleanText) == .orderedSame
         }
 
-        if !newQuote.isFavorite {
-            storage.toggleFavorite(for: newQuote.id)
-            log += "Цитату додано в обране.\n\n"
-        } else {
-            log += "Цитата вже перебуває в обраному.\n\n"
+        guard !isDuplicate else {
+            return false
         }
 
-        let favoriteQuotes = filterQuotes(
-            using: FavoritesFilterStrategy()
-        )
-
-        log += "Фільтр: тільки обрані\n"
-
-        for quote in favoriteQuotes {
-            let author = quote.author ?? "Автор невідомий"
-            log += "\"\(quote.text)\" — \(author)\n"
+        guard let newQuote = QuoteBuilder()
+            .setText(cleanText)
+            .setAuthor(cleanAuthor.isEmpty ? nil : cleanAuthor)
+            .setCategory(category)
+            .setFavorite(false)
+            .build()
+        else {
+            return false
         }
 
-        let motivationQuotes = filterQuotes(
-            using: CategoryFilterStrategy(category: .motivation)
-        )
+        repository.add(newQuote)
+        refresh()
 
-        log += "\nФільтр: категорія Мотивація\n"
+        return true
+    }
 
-        for quote in motivationQuotes {
-            let author = quote.author ?? "Автор невідомий"
-            log += "📖 \"\(quote.text)\" — \(author)\n"
-        }
-
-        log += "\nСЦЕНАРІЙ ЗАВЕРШЕНО"
-
-        demoOutput = log
-        print(log)
+    func toggleFavorite(for id: UUID) {
+        repository.toggleFavorite(for: id)
+        refresh()
     }
 }
