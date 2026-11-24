@@ -6,11 +6,19 @@ struct QuotesApp: App {
     @StateObject private var viewModel: QuotesViewModel
     @StateObject private var router = AppRouter()
 
+    private let apiService: any QuoteAPIService =
+        URLSessionQuoteAPIService()
+
     init() {
-        let repository: any QuoteRepository = UserDefaultsQuoteAdapter()
+        let repository: any QuoteRepository =
+            UserDefaultsQuoteAdapter()
+
         DemoQuoteData.seedIfNeeded(in: repository)
+
         _viewModel = StateObject(
-            wrappedValue: QuotesViewModel(repository: repository)
+            wrappedValue: QuotesViewModel(
+                repository: repository
+            )
         )
     }
 
@@ -18,7 +26,8 @@ struct QuotesApp: App {
         WindowGroup {
             ContentView(
                 viewModel: viewModel,
-                router: router
+                router: router,
+                apiService: apiService
             )
         }
     }
