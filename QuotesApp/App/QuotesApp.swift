@@ -2,16 +2,24 @@ import SwiftUI
 
 @main
 struct QuotesApp: App {
+
     @StateObject private var viewModel: QuotesViewModel
+    @StateObject private var router = AppRouter()
+
     init() {
-        let storage = UserDefaultsQuoteAdapter()
+        let repository: any QuoteRepository = UserDefaultsQuoteAdapter()
+        DemoQuoteData.seedIfNeeded(in: repository)
         _viewModel = StateObject(
-            wrappedValue: QuotesViewModel(storage: storage)
+            wrappedValue: QuotesViewModel(repository: repository)
         )
     }
+
     var body: some Scene {
         WindowGroup {
-            ContentView(viewModel: viewModel)
+            ContentView(
+                viewModel: viewModel,
+                router: router
+            )
         }
     }
 }
