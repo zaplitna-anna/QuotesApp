@@ -5,6 +5,8 @@ struct ContentView: View {
     @ObservedObject var viewModel: QuotesViewModel
     @ObservedObject var router: AppRouter
 
+    let apiService: any QuoteAPIService
+
     var body: some View {
         NavigationStack(path: $router.path) {
 
@@ -13,6 +15,7 @@ struct ContentView: View {
                 router: router
             )
             .navigationDestination(for: QuoteRoute.self) { route in
+
                 switch route {
 
                 case .details(let id):
@@ -25,6 +28,12 @@ struct ContentView: View {
                     FavoritesView(
                         viewModel: viewModel,
                         router: router
+                    )
+
+                case .onlineQuotes:
+                    RemoteQuotesView(
+                        service: apiService,
+                        localViewModel: viewModel
                     )
                 }
             }
@@ -43,6 +52,7 @@ struct ContentView: View {
         viewModel: QuotesViewModel(
             repository: QuoteCollection()
         ),
-        router: AppRouter()
+        router: AppRouter(),
+        apiService: MockQuoteAPIService(mode: .empty)
     )
 }

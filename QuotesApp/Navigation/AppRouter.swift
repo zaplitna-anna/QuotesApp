@@ -4,6 +4,7 @@ import Combine
 enum QuoteRoute: Hashable {
     case details(UUID)
     case favorites
+    case onlineQuotes
 }
 
 final class AppRouter: ObservableObject {
@@ -34,5 +35,9 @@ final class AppRouter: ObservableObject {
 
     func goToRoot() {
         path.removeAll()
+    }
+
+    func showOnlineQuotes() {
+    path.append(.onlineQuotes)
     }
 }

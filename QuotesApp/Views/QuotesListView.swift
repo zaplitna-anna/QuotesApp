@@ -104,7 +104,15 @@ struct QuotesListView: View {
                 .accessibilityLabel("Обрані цитати")
             }
 
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+
+                Button {
+                    router.showOnlineQuotes()
+                } label: {
+                    Image(systemName: "globe")
+                }
+                .accessibilityLabel("Онлайн-цитати")
+
                 Button {
                     router.showAddQuote()
                 } label: {
